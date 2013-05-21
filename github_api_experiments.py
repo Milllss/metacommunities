@@ -1,3 +1,6 @@
+user='YOURUSERNAME'
+password = 'YOURPASSWORD'
+
 # better not to use these packages -- I think they complicates things
 from pygithub3 import Github
 
@@ -5,9 +8,9 @@ gh = Github(login='YOURUSERNAME', password='YOURPASSWORD')
 kennethreitz_repos = gh.repos.list('kennethreitz').all()
 
 from github import Github
-g = Github('YOURUSERNAME', 'YOURPASSWORD')
+g = Github(user,password)
 
-##########without any library
+##########without any library is actually simpler!
 
 import requests
 import oauth2
@@ -22,11 +25,13 @@ if(r.ok):
 
 ## to get list of repos .... 
 
+## the count is the number of requests to the API. Each request returns a couple of hundred repos
+
 def repos(count=10):
 	url = 'https://api.github.com/repositories'
 	df = pn.DataFrame()
 	for x in xrange(1,count):
-		r = requests.get(url,auth=('YOURUSERNAME', 'YOURPASSWORD'))
+		r = requests.get(url,auth=(user,password))
 		url = r.links['next']['url']
 		if(r.ok):
 			repoItem = json.loads(r.text or r.content)
@@ -41,15 +46,7 @@ def repos(count=10):
 	return df
 	
 		
-#to get the next ones
-r.links['next']['url']
-  # e.g.  https://api.github.com/repositories?since=364
-
-#token: bf354f5a19fe1e71428b857f1f490c7407c3177e
-
-## with authentication
-r = requests.get(url, auth=('YOURUSERNAME', 'YOURPASSWORD'))
-
+df_repos = repos(100)
 
 
 

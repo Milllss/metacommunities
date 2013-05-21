@@ -8,6 +8,8 @@ import urllib2
 import StringIO
 
 
+# chunks of code to fetch, unzip, load and get some fields from gitarchive.org
+
 
 #shameless copy paste from json/decoder.py
 FLAGS = re.VERBOSE | re.MULTILINE | re.DOTALL
@@ -25,47 +27,26 @@ class ConcatJSONDecoder(json.JSONDecoder):
             objs.append(obj)
         return objs
 
-def load_hourly_git(file):
-            gz = gzip.open(file)
-            fc = gz.read()
-            gh= json.loads(fc, cls=ConcatJSONDecoder)
-            df=pn.DataFrame.from_dict(gh)
-            return df
+sample_file = 'data/2012-04-01-12.json.gz'
 
-## get the list of hourly dumps
-files = os.listdir('data/')
-
-# load 1st 100 hours as test  iinto a single data frame
-df = pn.DataFrame()
-for f in files[0:5]:
-            gh = load_hourly_git('data/'+f)
-            # timestamps = [x['created_at'] for x in gh]
-            # types=[x['type'] for x in gh]
-            df = df.append(gh)
-            print 'loaded '+f
-
-
-
-sample_file = 'data/2012-04-06-21.json.gz'
-
-##old testing lines    
-gz = gzip.open('data/2012-04-06-21.json.gz')
+##local data testing lines    
+gz = gzip.open('data/2012-04-01-12.json.gz')
 fc = gz.read()
 gh= json.loads(fc, cls=ConcatJSONDecoder)
 
-##to look at times
+# this creates a wide dataframe, with some fields nested. See below for a way of splitting them out. 
+df_all = pn.DataFrame.from_dict(gh)
 
-df = pn.DataFrame(timestamps, types)
 
 
-##to download and open directly from the githubarchive
-# to get some data
-# wget http://data.githubarchive.org/2012-04-{01..31}-{0..23}.json.gz  # gets all the data for april
+## to download and open directly from the githubarchive
+#
+#wget http://data.githubarchive.org/2012-04-{01..31}-{0..23}.json.gz  # gets all the data for april
 #wget http://data.githubarchive.org/2012-04-11-15.json.gz # 3pm on the day
 #wget http://data.githubarchive.org/2012-04-11-{0..23}.json.gz # the whole day
 #the earliest URL I could find that works: http://data.githubarchive.org/2011-02-12-15.json.gz
 
-#example
+#example of getting an hours data
 url = 'http://data.githubarchive.org/2012-04-1-15.json.gz' ##1-5 April 2012, 3-4pm
 response = urllib2.urlopen(url)
 compressedFile = StringIO.StringIO(response.read())
