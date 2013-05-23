@@ -117,7 +117,9 @@ for name, url in df_repos.languages_url.iteritems():
 
 # <codecell>
 
+df_lang = df_lang.fillna(0)
 print df_lang.shape
+df_lang
 
 # <markdowncell>
 
