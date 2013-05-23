@@ -4,11 +4,16 @@ import re
 import pandas as pn
 import os
 import requests
-import urllib2
 import StringIO
 
 
 # chunks of code to fetch, unzip, load and get some fields from gitarchive.org
+
+#TODO:
+# 1. code to store json objects in a no-SQL database. Mongo perhaps easiest
+# 2. code to put useful extracts from data into SQL tables
+# 3. code to generate days for a given month
+# 4. calculate how much storage we'd need for all the githubarchive data (roughly 2 years worth)
 
 
 #shameless copy paste from json/decoder.py
@@ -29,7 +34,6 @@ class ConcatJSONDecoder(json.JSONDecoder):
 
 sample_file = 'data/2012-04-01-12.json.gz'
 
-## load local data file and return dataframe    
 
 def load_local_gz(sample_file):
     """returns a DataFrame with all the data from one githubarchive gzip file."""
@@ -52,8 +56,8 @@ def load_local_gz(sample_file):
 
 def load_archive_gz_demo():
     url = 'http://data.githubarchive.org/2012-04-1-15.json.gz' ##1-5 April 2012, 3-4pm
-    response = urllib2.urlopen(url)
-    compressedFile = StringIO.StringIO(response.read())
+    response = requests.get(url)
+    compressedFile = StringIO.StringIO(response.content)
     decompressedFile = gzip.GzipFile(fileobj=compressedFile)
     fc = decompressedFile.read()
     gh= json.loads(fc, cls=ConcatJSONDecoder)
@@ -113,18 +117,25 @@ def fetch_one_day_data(year=2012, month=1, day=1):
         print 'fetching ' + url
     return df
 
-# there are 3 nested dictionaries in the jzon object - repos, actor_attributes and payload
-# to deal with nested json for repos, etc
 
 def unnest_git_json(df_all):
     
-    """ Returns  a dictionary of the data nested in each json objects."""
+    """ Returns  a dictionary of the data nested in each json object. There are 3 nested dictionaries in the json object - repos, actor_attributes and payload.    """
     #for repository
-    df_rep = pn.DataFrame.from_dict(df_all.repository.to_dict()).transpose()
+    df_rep = pn.DataFrame.from_dict(df_all['repository'].to_dict()).transpose()
     #for users
     df_actors  = pn.DataFrame.from_dict(df_all['actor_attributes'].to_dict()).transpose()
     #for payload -- whatever that is
     df_payload  = pn.DataFrame.from_dict(df_all['payload'].to_dict()).transpose()
 
-    return {'repository':df_rep, 'actors': df_actors, 'payload':df_payload}
+    return {'all': df_all, 'repository':df_rep, 'actors': df_actors, 'payload':df_payload}
 
+def github_event_explore(df_all):
+
+    """ Returns a DataFrame with event types, and timestamps."""
+
+    dic ={'created_at': , 'type' :df_all['type']}
+    df = pn.Series(data = df_all['type'],index = df_all['created_at'])
+
+    df_eve.type.value_counts().plot(kind='bar')
+    return df
