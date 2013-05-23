@@ -101,7 +101,7 @@ df_repos.columns
 # <codecell>
 
 # need to reindex them -- the id numbers that are assigned are not unique?
-#df_repos = df_repos.set_index('name')
+df_repos = df_repos.set_index('name')
 df_repos.languages_url.head()
 df_lang = pn.DataFrame()
 
