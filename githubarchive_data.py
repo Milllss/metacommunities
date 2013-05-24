@@ -94,8 +94,8 @@ def fetch_archive(url):
     df_all = pn.DataFrame()
 
     try:
-        response = urllib2.urlopen(url)
-        compressedFile = StringIO.StringIO(response.read())
+        response = requests.get(url)
+        compressedFile = StringIO.StringIO(response.content)
         decompressedFile = gzip.GzipFile(fileobj=compressedFile)
         fc = decompressedFile.read()
         gh= json.loads(fc, cls=ConcatJSONDecoder)
@@ -134,8 +134,27 @@ def github_event_explore(df_all):
 
     """ Returns a DataFrame with event types, and timestamps."""
 
-    dic ={'created_at': , 'type' :df_all['type']}
+    dic ={'created_at': df_all['created_at'], 'type' :df_all['type']}
     df = pn.Series(data = df_all['type'],index = df_all['created_at'])
 
     df_eve.type.value_counts().plot(kind='bar')
     return df
+
+def calculate_storage_needs_in_Gbytes(days=1):
+
+    """Returns a dictionary with compressed and uncompressed total gigabytes 
+    for githubarchive data by the day. The average hourly figure  of 1133000 compressed bytes
+    is based on an average filesize calculated on 700 files.
+    @TODO: calculate the uncompressed values based on the uncompressed size of 700 files
+    @TODO: the same calculations for stackoverflow -- Richard?
+    """
+
+    average_gz_file = float(1133000)
+    gb = 1024*1024*1024; #hope this is right
+    f = gzip.GzipFile('data/2012-04-01-12.json.gz')
+    uc = float(len(f.read())) * days * 24/gb
+    #hour = os.path.getsize('data/2012-04-01-12.json.gz')
+    total_comp = days * average_gz_file *24/gb
+    return {'compressed': total_comp, 'uncompressed': uc}
+
+
