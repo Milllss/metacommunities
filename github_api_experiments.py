@@ -5,7 +5,9 @@
 
 # ## Exploring github repository profiles using the github api.
 # 
-# Authentication with the github api increases the amount of data that can be retrieved.
+# Authentication with the github api increases the amount of data that can be retrieved. I've set up a github user id that we can use of api calls. 
+# 
+# I think we might need to split off the data exploration code from the underlying data generation code. At the moment, they are mixed together in this notebook.
 
 # <codecell>
 
@@ -29,8 +31,8 @@ import time
 
 
 
-user='YOU'
-password = 'YOURS'
+user='metacomm'
+password = '12ipad34'
 
 
 def github_timeline():
@@ -91,8 +93,8 @@ print lang
 
 # <codecell>
 
-# get a sample of 1000 repos
-df_repos = get_repos(10)
+# get a sample of repos
+df_repos = get_repos(5)
 
 
 # we are interested in the platforms and languages of repositories. How do get that from the repository data?
@@ -105,7 +107,7 @@ df_repos = df_repos.set_index('name')
 df_repos.languages_url.head()
 df_lang = pn.DataFrame()
 
-for name, url in df_repos.languages_url.iteritems():
+for name, url in df_repos.ix[0:100].languages_url.iteritems():
     print 'fetching repository %s from %s'% (name, url)
 
     r = requests.get(url,auth=(user,password))
@@ -119,7 +121,21 @@ for name, url in df_repos.languages_url.iteritems():
 
 df_lang = df_lang.fillna(0)
 print df_lang.shape
-df_lang
+import matplotlib.pyplot as plt
+plt.subplots(nrows=1, ncols=2)
+#plt.figure() 
+
+#the use of languages
+df_lang.apply(lambda x: np.count_nonzero(x)).plot(kind='bar', title = 'language usage')
+#how much code is written in each language
+plt.figure()
+df_lang.sum().plot(kind='bar',title = 'code size')
+
+# <markdowncell>
+
+# The figures show that the amount of code written in different languages differs greatly from the number of projects that use languages.
+# So while Javascript is a very popular language in terms of numbers of repositories using it, it looks like much more coding is done in 
+# Ruby, C and C++. Obviously only a small sample (a couple of hundred repositories), but might be worth following this up.  
 
 # <markdowncell>
 
@@ -139,9 +155,10 @@ df_repos.fork.value_counts().plot(kind='bar')
 
 # <codecell>
 
-
-
-# <codecell>
-
 df_repos.description[df_repos.fork==True]
+
+# <markdowncell>
+
+# In terms of the metacommunity idea, I think it would be worth processing the titles and descriptions to get a catalogue of 'named entities.' 
+# I've started to do this with some of the stackoverflow data, using the natural language toolkit. 
 
