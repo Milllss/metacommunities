@@ -31,7 +31,7 @@ PRIMARY KEY (  `id` )
 ## the count is the number of requests to the API. Each request returns 100 repos
 #to 'resume' this after already adding records to table, add ?since=x where x is the last ID in your table
 def save_repos(count=1000000):
-	url = 'https://api.github.com/repositories'
+	url = 'https://api.github.com/repositories/since=65792'
 	for x in xrange(1,count):
 		r = requests.get(url,auth=(user,password))
 		url = r.links['next']['url']
