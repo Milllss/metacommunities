@@ -5,7 +5,7 @@ import pandas as pn
 import os
 import requests
 import StringIO
-
+import numpy as np
 
 # chunks of code to fetch, unzip, load and get some fields from gitarchive.org
 
@@ -94,8 +94,8 @@ def fetch_archive(url):
     df_all = pn.DataFrame()
 
     try:
-        response = urllib2.urlopen(url)
-        compressedFile = StringIO.StringIO(response.read())
+        response = requests.get(url)
+        compressedFile = StringIO.StringIO(response.content)
         decompressedFile = gzip.GzipFile(fileobj=compressedFile)
         fc = decompressedFile.read()
         gh= json.loads(fc, cls=ConcatJSONDecoder)
@@ -134,8 +134,52 @@ def github_event_explore(df_all):
 
     """ Returns a DataFrame with event types, and timestamps."""
 
-    dic ={'created_at': , 'type' :df_all['type']}
+    dic ={'created_at': df_all['created_at'], 'type' :df_all['type']}
     df = pn.Series(data = df_all['type'],index = df_all['created_at'])
 
     df_eve.type.value_counts().plot(kind='bar')
     return df
+
+def calculate_storage_needs_in_Gbytes(days=1):
+
+    """Returns a dictionary with compressed and uncompressed total gigabytes 
+    for githubarchive data by the day. The average hourly figure  of 1133000 compressed bytes
+    is based on an average filesize calculated on 700 files.
+    @TODO: calculate the uncompressed values based on the uncompressed size of 700 files
+    @TODO: the same calculations for stackoverflow -- Richard?
+    """
+
+    average_gz_file = float(1133000)
+    gb = 1024*1024*1024; #hope this is right
+    #sample file only -- not necessarily representative!
+    f = gzip.GzipFile('data/2012-04-01-12.json.gz')
+    uc = float(len(f.read())) * days * 24/gb
+    #hour = os.path.getsize('data/2012-04-01-12.json.gz')
+    total_comp = days * average_gz_file *24/gb
+    return {'compressed': total_comp, 'uncompressed': uc}
+
+def calculate_average_uncompressed_hourly_data_size(hours=1):
+    
+    """Returns an average hourly uncompressed data size based on a random sample of hours
+        from 10 days over 3 years
+        @TODO: this is broken -- needs debug
+    """
+    hrs = np.random.random_integers(0, 24, hours)
+    days = np.random.random_integers(1, 28, 10)
+    months = np.random.random_integers(1, 12, 3)
+    years = np.random.random_integers(2011, 2013, 3)
+    files = []
+    for y in years:
+        for m in months:
+            for d in days:
+                for h in hrs:
+                    files.append(construct_githubarchive_url(y, m, d, h))
+     for f in files:
+        try:
+            response = requests.get(f)
+            compressedFile = StringIO.StringIO(response.content)
+            uc = float(len(gzip.GzipFile(fileobj=compressedFile).read()))
+            print uc
+        except Exception, e:
+            print e
+     
