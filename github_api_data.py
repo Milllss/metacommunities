@@ -75,7 +75,7 @@ def get_programming_languages(repos_df):
 
     df_lang = pn.DataFrame()
 
-    for name, url in repos_df.ix[0:100].languages_url.iteritems():
+    for name, url in repos_df.languages_url.iteritems():
         print 'fetching repository %s from %s'% (name, url)
         req = requests.get(url, auth=(USER, PASSWORD))
         lang = req.json
