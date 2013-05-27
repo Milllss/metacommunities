@@ -10,7 +10,7 @@ To download and open directly from the githubarchive:
 - get 3-4 pm on the day:
 #wget http://data.githubarchive.org/2012-04-11-15.json.gz 
 
-- get he whole day:
+- get one whole day (24 hours:
 #wget http://data.githubarchive.org/2012-04-11-{0..23}.json.gz
 
 n.b. the earliest URL I could find that works: 
@@ -52,11 +52,10 @@ class ConcatJSONDecoder(json.JSONDecoder):
             objs.append(obj)
         return objs
 
-
-def load_local_gz(sample_file  = 'data/2012-04-01-12.json.gz'):
+def load_local_archive(sample_file  = 'data/2012-04-01-12.json.gz'):
 
     """returns a DataFrame with all the data 
-    from one githubarchive gzip file."""
+    from one sample githubarchive gzip file."""
 
     gzfile = gzip.open(sample_file)
     decompressed_file = gzfile.read()
@@ -64,22 +63,6 @@ def load_local_gz(sample_file  = 'data/2012-04-01-12.json.gz'):
 
     # this creates a wide dataframe, with some fields nested. 
     # See below for a way of splitting them out. 
-    df_all = pn.DataFrame.from_dict(git_json)
-    return df_all
-
-
-def load_archive_gz_demo():
-
-    """Returns DataFrame with 1 hour of sample github data 
-    stored locally: 5 April 2012, 3-4pm"""
-
-
-    url = 'http://data.githubarchive.org/2012-04-1-15.json.gz' 
-    response = requests.get(url)
-    compressed_file = StringIO.StringIO(response.content)
-    decompressed_file = gzip.GzipFile(fileobj=compressed_file)
-    decompressed_file = decompressed_file.read()
-    git_json = json.loads(decompressed_file, cls=ConcatJSONDecoder)
     df_all = pn.DataFrame.from_dict(git_json)
     return df_all
 
@@ -105,7 +88,6 @@ def construct_githubarchive_url(year=2012,  month=1, day=1,  hour = 12 ):
     date_url = base_url +str(year) +'-'+month +'-' + day + '-' + str(hour) +suffix
     return date_url
 
-
 def fetch_archive(url):
 
     """ Returns a dataframe  with  all data for the specified hour. """
@@ -123,8 +105,14 @@ def fetch_archive(url):
         print exce
     return df_all
 
+def fetch_archive_demo():
 
-def fetch_one_day_data(year=2012, month=1, day=1):
+    """Returns DataFrame with 1 hour of sample github data """
+
+    url = 'http://data.githubarchive.org/2012-04-1-15.json.gz' 
+    return fetch_archive(url)
+
+def fetch_one_day(year=2012, month=1, day=1):
 
     """ Returns a dataframe with 1 days github events."""
 
@@ -135,7 +123,6 @@ def fetch_one_day_data(year=2012, month=1, day=1):
         day_df   = day_df .append(fetch_archive(url))
         print 'fetching ' + url
     return day_df   
-
 
 def unnest_git_json(df_all):
     
@@ -179,7 +166,6 @@ def calculate_storage_in_gbytes(days=1):
     #hour = os.path.getsize('data/2012-04-01-12.json.gz')
     total_comp = days * average_gz_file *24/gbyte
     return {'compressed': total_comp, 'uncompressed': uncompressed_size}
-
 
 def uncompressed_hourly_average(hours=1):
     
