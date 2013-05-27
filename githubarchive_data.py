@@ -16,8 +16,14 @@ To download and open directly from the githubarchive:
 n.b. the earliest URL I could find that works: 
 #http://data.githubarchive.org/2011-02-12-15.json.gz
 
-"""
+ @TODO:
+ 1. code to store json objects in a no-SQL database. Mongo perhaps easiest
+ 2. code to put useful extracts from data into SQL tables
+ 3. code to generate days for a given month
+ 4. calculate how much storage we'd need for all the githubarchive data 
+ (roughly 2 years worth)
 
+"""
 
 import gzip
 import json
@@ -26,16 +32,6 @@ import pandas as pn
 import requests
 import StringIO
 import numpy as np
-
-# chunks of code to fetch, unzip, load and get some fields from gitarchive.org
-
-# @TODO:
-# 1. code to store json objects in a no-SQL database. Mongo perhaps easiest
-# 2. code to put useful extracts from data into SQL tables
-# 3. code to generate days for a given month
-# 4. calculate how much storage we'd need for all the githubarchive data 
-# (roughly 2 years worth)
-
 
 #shameless copy paste from json/decoder.py
 FLAGS = re.VERBOSE | re.MULTILINE | re.DOTALL
@@ -57,7 +53,6 @@ class ConcatJSONDecoder(json.JSONDecoder):
         return objs
 
 
-
 def load_local_gz(sample_file  = 'data/2012-04-01-12.json.gz'):
 
     """returns a DataFrame with all the data 
@@ -71,7 +66,6 @@ def load_local_gz(sample_file  = 'data/2012-04-01-12.json.gz'):
     # See below for a way of splitting them out. 
     df_all = pn.DataFrame.from_dict(git_json)
     return df_all
-
 
 
 def load_archive_gz_demo():
@@ -110,7 +104,6 @@ def construct_githubarchive_url(year=2012,  month=1, day=1,  hour = 12 ):
 
     date_url = base_url +str(year) +'-'+month +'-' + day + '-' + str(hour) +suffix
     return date_url
-
 
 
 def fetch_archive(url):
