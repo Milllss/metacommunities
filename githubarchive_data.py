@@ -52,19 +52,26 @@ class ConcatJSONDecoder(json.JSONDecoder):
             objs.append(obj)
         return objs
 
-def load_local_archive(sample_file  = 'data/2012-04-01-12.json.gz'):
+def load_local_archive_dataframe(sample_file  = 'data/2012-04-01-12.json.gz'):
 
     """returns a DataFrame with all the data 
+    from one sample githubarchive gzip file."""
+    
+    git_json = load_local_archive_json(sample_file)
+    # this creates a wide dataframe, with some fields nested. 
+    # See below for a way of splitting them out. 
+    df_all = pn.DataFrame.from_dict(git_json)
+    return df_all
+
+def load_local_archive_json(sample_file  = 'data/2012-04-01-12.json.gz'):
+
+    """returns a json with all the data 
     from one sample githubarchive gzip file."""
 
     gzfile = gzip.open(sample_file)
     decompressed_file = gzfile.read()
     git_json = json.loads(decompressed_file, cls=ConcatJSONDecoder)
-
-    # this creates a wide dataframe, with some fields nested. 
-    # See below for a way of splitting them out. 
-    df_all = pn.DataFrame.from_dict(git_json)
-    return df_all
+    return git_json
 
 def construct_githubarchive_url(year=2012,  month=1, day=1,  hour = 12 ):
 

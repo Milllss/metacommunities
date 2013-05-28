@@ -11,6 +11,8 @@ import pandas.io.sql as sql
 import pandas.io.pytables as pyt
 import MySQLdb
 import githubarchive_data as ghd
+from pymongo import MongoClient
+import os
 
 # read passwords in.
 # I'm using the same one for API and sqldb
@@ -31,15 +33,16 @@ def mysql_setup():
     return con
     
 def setup_test_data():
-    """Function retrieves one day of data from github api.
-    It saves it as a csv, as a python pickle file,
-    as a hdf5 store, as mysql table.
-    If you haven't run tests before, you will need
+    """Function uses sample githubarchive data.
+    It saves a few hundred copies as a csv, as a python pickle file,
+    as a hdf5 store, as mysql table and as mondodb.
+    If you haven't run  timing tests before, you will need
     to run this first.
     """
     print 'use one hour of sample and replicate 100 times'
     #use only the repository data --
-    onehr_df = ghd.load_local_archive()
+    onehr_df = ghd.load_local_archive_dataframe()
+    onehr_json = ghd.load_local_archive_json()
     one_hr_repo_df = ghd.unnest_git_json(onehr_df)['repository']
     many_hr_repo_df = pn.DataFrame()
     for i in range(1,100):
@@ -56,8 +59,17 @@ def setup_test_data():
     print 'saving data to hdf5 filestore'
     store = pyt.HDFStore('data/git.h5')
     store.put('oneday', many_hr_repo_df)
+    print 'saving data to mongodb'
+    # repos_son = onehr_df['repository']
+    many_hr_repo_df = many_hr_repo_df.dropna()    
+    client = MongoClient()
+    dbm = client['git']
+    collection = dbm['gittest']
+    # many_hr_repo_df = many_hr_repo_df.set_index(many_hr_repo_df.name)
+    [collection.insert(onehr_json) for i in range(1,100)]
 
 def clean_test_data():
+
     """Function removes all datasets made for 
     for testing purposes
     """
@@ -67,9 +79,9 @@ def clean_test_data():
     gh_csv = 'data/oneday.csv'
     gh_pick = 'data/oneday.pyd'
     gh_hd5 = 'data/git.h5'
-    #@TODO: remove these files for full cleanup
-    # They will be overwritten during setup anyway
-
+    os.remove(gh_csv)
+    os.remove(gh_pick)
+    os.remove(gh_hd5)
 
 
 def time_data_retrieval(number_of_tests=1):
@@ -99,32 +111,44 @@ def time_data_retrieval(number_of_tests=1):
     hd5_timer = timeit.Timer(lambda: load_hd5_df(store))
     print('hd5:', hd5_timer.timeit(number_of_tests))
 
+    client = MongoClient()
+    dbm = client['git']
+    mong_timer = timeit.Timer(lambda: load_mongo_df(dbm))
+    print('mongodb:', mong_timer.timeit(number_of_tests))
+    
     test_df = load_hd5_df(store)
     print('Test data size: ', test_df.shape)
     
     
 def load_csv_df(gh_csv):
-    """ Loads one day of github api data
-    as part of timing test"""
+    """ load test data from csv"""
     csv_df = pn.DataFrame.from_csv(gh_csv)
     return csv_df
 
 
 def load_pickle_df(gh_pick):
-    """ Loads one day of github api data
-    as part of timing test"""
+    """ load test data from  from pickle file"""
     pickle_handle = open(gh_pick, 'rb')
     pickle_df = pickle.load(pickle_handle)
     return pickle_df
 
 def load_hd5_df(store):
-    """ load sample one day github data from hd5 filestore
+    """ load test data  from hd5 filestore
     """
     hd5df = store.get('oneday')
     return hd5df
 
 def load_mysql_df(con, query):
-    """ load sample one day github data from mysql
+    """ load test data from  mysql
     """
     sql_df = sql.execute(con = con, sql = query)
     return sql_df
+
+def load_mongo_df(dbm):
+    """load test data from mongdb"""
+
+    cursor = dbm['gittest'].find({})
+    mongo_df =  pn.DataFrame(list(cursor))
+    return mongo_df
+
+
