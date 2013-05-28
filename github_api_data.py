@@ -21,9 +21,8 @@ g = Github(user,password)
 """
 
 import requests
-import pandas as pn
 import time
-
+import pandas as pn
 
 # read API user/password from your local file'
 USER_FILE = open('github_api_user.txt')
@@ -84,3 +83,5 @@ def get_programming_languages(repos_df):
 
     df_lang = df_lang.fillna(0)
     return df_lang
+
+

@@ -24,4 +24,4 @@ words = [nltk.wordpunct_tokenize(s) for s in titles]
 words_pos_tagged = [nltk.pos_tag(t) for t in words]
 
 #to get the named entities
-named_entities =nltk.batch_ne_chunk(words_pos_tagged)
+named_entities =nltk.batch_ne_chnk(words_pos_tagged)
