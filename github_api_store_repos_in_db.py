@@ -18,7 +18,7 @@ from pandas.io import sql
 
 USER_FILE = open('github_api_user.txt')
 USER = USER_FILE.readline().rstrip('\n')
-PASSWORD = USER_FILE.readline()
+PASSWORD = USER_FILE.readline().rstrip('\n')
 USER_FILE.close()
 
 
@@ -33,27 +33,16 @@ def save_repos(count=1000000):
     """
 
     con = MySQLdb.connect("localhost", USER, PASSWORD, "git", charset='utf8')
-    url = 'https://api.github.com/repositories/since=65792'
+    url = 'https://api.github.com/repositories'
     for x in xrange(1,count):
         req = requests.get(url,auth=(USER,PASSWORD))
         url = req.links['next']['url']
         df_temp = pn.DataFrame()
         if(req.ok):
             repoItem = req.json
-            #Richard: I can't see the point of the list comprehensions here
-            #Don't we just want single items for each key?
-            ids = [it['id'] for it in repoItem]
-            names = [it['name'] for it in repoItem]
-            private = [it['private'] for it in repoItem]
-            full_names = [it['full_name'] for it in repoItem]
-            repo_description = [it['description'] for it in repoItem]
-            fork = [it['fork'] for it in repoItem]
-            useful_fields = {'id':ids, 'name':names, 
-                'full_name':full_names, 
-                'private':private, 
-                'description': repo_description, 
-                'fork': fork}
-            df_temp = pn.DataFrame.from_dict(useful_fields)
+            repos_df_temp = pn.DataFrame.from_dict(repoItem)
+            df_temp = repos_df_temp[['id','name','private','full_name','description','fork']]
+            df_temp = df_temp.fillna('')		
             sql.write_frame(df_temp, con=con, name='repos', 
                 if_exists='append', flavor='mysql')
         print 'fetched 100 rows'
